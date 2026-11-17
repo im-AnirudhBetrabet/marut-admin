@@ -8,7 +8,11 @@ import { acceptInviteRouter } from './modules/users/accept-invite.routes.js';
 import { HttpError }          from './utils/http.js';
 
 export const app = express();
-app.use(helmet());
+const helmetMiddleware = (
+  helmet as unknown as () => express.RequestHandler
+)();
+
+app.use(helmetMiddleware);
 app.use(cors({ 
     origin     : env.FRONTEND_URL, 
     credentials: false 
