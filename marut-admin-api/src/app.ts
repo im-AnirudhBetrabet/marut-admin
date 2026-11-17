@@ -1,0 +1,44 @@
+import express                from 'express';
+import cors                   from 'cors';
+import helmet                 from 'helmet';
+import { env }                from './config/env.js';
+import { authRouter }         from './modules/auth/auth.routes.js';
+import { usersRouter }        from './modules/users/users.routes.js';
+import { acceptInviteRouter } from './modules/users/accept-invite.routes.js';
+import { HttpError }          from './utils/http.js';
+
+export const app = express();
+app.use(helmet());
+app.use(cors({ 
+    origin     : env.FRONTEND_URL, 
+    credentials: false 
+}));
+app.use(express.json({ 
+    limit: '1mb' 
+}));
+
+app.get('/health'            , (_req, res) => res.json({ status: 'ok', service: 'marut-admin-api' }));
+app.use('/api/v1/auth'       , authRouter);
+app.use('/api/v1/users'      , usersRouter);
+app.use('/api/v1/invitations', acceptInviteRouter);
+
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if (err instanceof HttpError) {
+    return res.status(err.status).json({ 
+        error: { 
+            code   : err.code, 
+            message: err.message 
+            } 
+        });
+    }
+  if (err && typeof err === 'object' && 'issues' in err) {
+    return res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Request validation failed.', details: (err as {issues: unknown}).issues } });
+  }
+  console.error(err);
+  return res.status(500).json({ 
+        error: { 
+                code   : 'INTERNAL_ERROR', 
+                message: 'An unexpected error occurred.' 
+        } 
+    });
+});
