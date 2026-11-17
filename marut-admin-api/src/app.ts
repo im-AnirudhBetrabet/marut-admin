@@ -47,3 +47,4 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
         } 
     });
 });
+export default app;
