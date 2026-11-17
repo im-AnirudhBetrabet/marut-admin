@@ -17,6 +17,7 @@ app.use(express.json({
     limit: '1mb' 
 }));
 
+
 app.get('/health'            , (_req, res) => res.json({ status: 'ok', service: 'marut-admin-api' }));
 app.use('/api/v1/auth'       , authRouter);
 app.use('/api/v1/users'      , usersRouter);
