@@ -1,23 +1,28 @@
-import { useState, type FormEvent }                           from "react";
+import { useState, type FormEvent } from "react";
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, Sprout } from "lucide-react";
-import { Link, useLocation, useNavigate }                     from "react-router-dom";
-import { ApiError, apiRequest }                               from "../../services/api/client";
-import { isSupabaseConfigured, supabase }                     from "../../services/auth/supabase";
-import { useAuth }                                            from "../../app/useAuth";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ApiError, apiRequest } from "../../services/api/client";
+import { isSupabaseConfigured, supabase } from "../../services/auth/supabase";
+import { useAuth } from "../../app/useAuth";
+import { MarutTransition } from "../../components/branding/MarutTransition";
 
 type CheckEmailResponse = { authorised: boolean; can_login: boolean };
 
 export function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [step, setStep] = useState<"email" | "password">("email");
-  const [showPassword, setShowPassword] = useState(false);
-  const [checkingEmail, setCheckingEmail] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const navigate = useNavigate();
-  const location = useLocation();
+  const [email                , setEmail                ] = useState("");
+  const [password             , setPassword             ] = useState("");
+  const [step                 , setStep                 ] = useState<"email" | "password">("email");
+  const [showPassword         , setShowPassword         ] = useState(false);
+  const [checkingEmail        , setCheckingEmail        ] = useState(false);
+  const [submitting           , setSubmitting           ] = useState(false);
+  const [error                , setError                ] = useState("");
+  const [notice               , setNotice               ] = useState("");
+  const [showLoginTransition  , setShowLoginTransition  ] = useState(false);
+  const [loginTransitionReady , setLoginTransitionReady ] = useState(false);
+  const [transitionDestination, setTransitionDestination] = useState("/dashboard");
+
+  const navigate         = useNavigate();
+  const location         = useLocation();
   const { refreshAdmin } = useAuth();
 
   const checkEmail = async (event: FormEvent<HTMLFormElement>) => {
@@ -61,6 +66,8 @@ export function LoginPage() {
       return;
     }
     setSubmitting(true);
+    setLoginTransitionReady(false);
+    setShowLoginTransition(true);
     try {
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
@@ -79,8 +86,11 @@ export function LoginPage() {
         throw new Error("We couldn't verify your administrator profile. Please try again.");
       }
       const destination = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
-      navigate(destination && destination !== "/login" ? destination : "/dashboard", { replace: true });
+      setTransitionDestination(destination && destination !== "/login" ? destination : "/dashboard");
+      setLoginTransitionReady(true);
     } catch (cause) {
+      setShowLoginTransition(false);
+      setLoginTransitionReady(false);
       setError(cause instanceof Error ? cause.message : "Unable to sign in. Please try again.");
     } finally {
       setSubmitting(false);
@@ -195,6 +205,13 @@ export function LoginPage() {
         </div>
         <img className="auth-wave auth-wave--mobile" src="/assets/botanical-wave.webp" alt="" aria-hidden="true" />
       </section>
+      {showLoginTransition && (
+        <MarutTransition
+          mode="login"
+          ready={loginTransitionReady}
+          onComplete={() => navigate(transitionDestination, { replace: true })}
+        />
+      )}
     </main>
   );
 }

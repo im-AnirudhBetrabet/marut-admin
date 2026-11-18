@@ -8,7 +8,8 @@ type AuthContextValue = {
   loading     : boolean;
   profileError: string | null;
   refreshAdmin: (sessionOverride?: Session) => Promise<AdminMeResponse>;
-  signOut     : () => Promise<void>;
+  signOut     : (options?: { deferStateReset?: boolean }) => Promise<void>;
+  finalizeSignOut: () => void;
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

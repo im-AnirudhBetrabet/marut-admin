@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -11,26 +12,27 @@ import { supabase } from "../services/auth/supabase";
 import { AuthContext } from "./auth-context";
 
 export type AdminProfile = {
-  id: string;
+  id          : string;
   auth_user_id: string;
-  email: string;
+  email       : string;
   display_name: string;
-  role: "owner" | "staff" | string;
-  is_active: boolean;
+  role        : "owner" | "staff" | string;
+  is_active   : boolean;
 };
 
 export type AdminMeResponse = {
-  user: AdminProfile;
-  role: string;
+  user       : AdminProfile;
+  role       : string;
   permissions: Array<{ module_key: string; level: string }> | "all";
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [admin, setAdmin] = useState<AdminMeResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [session       , setSession       ] = useState<Session | null>(null);
+  const [admin         , setAdmin         ] = useState<AdminMeResponse | null>(null);
+  const [loading       , setLoading       ] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileError  , setProfileError  ] = useState<string | null>(null);
+  const deferSignOutStateRef = useRef(false);
 
   const refreshAdmin = useCallback(async (sessionOverride?: Session) => {
     const activeSession = sessionOverride ?? session;
@@ -52,8 +54,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!mounted) return;
+      // Keep the protected layout mounted while the logout transition is visible.
+      // AppLayout clears local auth state after the exit animation completes.
+      if (event === "SIGNED_OUT" && deferSignOutStateRef.current) return;
       setSession(nextSession);
       if (!nextSession) {
         setAdmin(null);
@@ -122,18 +127,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [loading, session]);
 
-  const signOut = useCallback(async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+  const clearLocalAuthState = useCallback(() => {
+    deferSignOutStateRef.current = false;
     setSession(null);
     setAdmin(null);
     setProfileLoading(false);
     setProfileError(null);
   }, []);
 
+  const signOut = useCallback(async (options?: { deferStateReset?: boolean }) => {
+    deferSignOutStateRef.current = options?.deferStateReset === true;
+
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      deferSignOutStateRef.current = false;
+      throw error;
+    }
+
+    if (!options?.deferStateReset) {
+      clearLocalAuthState();
+    }
+  }, [clearLocalAuthState]);
+
+  const finalizeSignOut = useCallback(() => {
+    clearLocalAuthState();
+  }, [clearLocalAuthState]);
+
   const value = useMemo(
-    () => ({ session, admin, loading: loading || profileLoading, profileError, refreshAdmin, signOut }),
-    [session, admin, loading, profileLoading, profileError, refreshAdmin, signOut],
+    () => ({ session, admin, loading: loading || profileLoading, profileError, refreshAdmin, signOut, finalizeSignOut }),
+    [session, admin, loading, profileLoading, profileError, refreshAdmin, signOut, finalizeSignOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

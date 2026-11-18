@@ -1,0 +1,451 @@
+/* MARUT dynamic authentication transition.
+   The component controls phase changes; CSS only animates each phase. */
+.marut-transition {
+    position: fixed;
+    z-index: 99999;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    isolation: isolate;
+    color: #30472a;
+    background:
+        radial-gradient(ellipse at 50% 47%, rgb(255 255 255 / 86%) 0%, transparent 42%),
+        linear-gradient(135deg, #fffaf0 0%, #f3ead9 100%);
+    opacity: 1;
+}
+
+.marut-transition-glow {
+    position: absolute;
+    z-index: -1;
+    width: min(72vw, 680px);
+    aspect-ratio: 1;
+    border: 1px solid rgb(185 139 62 / 13%);
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 36px rgb(185 139 62 / 4%),
+        0 0 0 86px rgb(185 139 62 / 3%),
+        0 0 100px rgb(185 139 62 / 13%);
+    animation: marut-glow-breathe 2.8s ease-in-out infinite;
+}
+
+.marut-transition-lockup {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: min(80vw, 560px);
+    min-height: 130px;
+}
+
+.marut-transition-word {
+    display: inline-block;
+    overflow: hidden;
+    color: #304d24;
+    font-family: var(--font-sans, Arial, sans-serif);
+    font-size: clamp(52px, 10vw, 112px);
+    font-weight: 750;
+    letter-spacing: .16em;
+    line-height: 1;
+    white-space: nowrap;
+    clip-path: inset(0 100% 0 0);
+    transform-origin: center;
+}
+
+.marut-transition--typing .marut-transition-word {
+    animation: marut-type-in .9s steps(5, end) forwards;
+}
+
+.marut-transition--waiting .marut-transition-word {
+    clip-path: inset(0 0 0 0);
+    animation: marut-word-breathe 1.8s ease-in-out infinite;
+}
+
+.marut-transition--exit .marut-transition-word {
+    clip-path: inset(0 0 0 0);
+    animation: marut-word-burst .62s cubic-bezier(.18, .72, .2, 1) forwards;
+}
+
+.marut-transition-caret {
+    width: 3px;
+    height: clamp(42px, 7vw, 82px);
+    margin-left: 7px;
+    background: #bd8a22;
+    opacity: 0;
+}
+
+.marut-transition--typing .marut-transition-caret {
+    opacity: 1;
+    animation: marut-caret-blink .7s steps(2, start) 2;
+}
+
+.marut-transition--waiting .marut-transition-caret {
+    opacity: 0;
+}
+
+.marut-transition--exit .marut-transition-caret {
+    opacity: 0;
+}
+
+.marut-transition-caption {
+    position: absolute;
+    top: calc(50% + 91px);
+    margin: 0;
+    color: #82765e;
+    font-family: var(--font-sans, Arial, sans-serif);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    opacity: 1;
+    text-align: center;
+}
+
+.marut-transition--typing .marut-transition-caption {
+    animation: marut-caption-in .35s ease .45s both;
+}
+
+.marut-transition--waiting .marut-transition-caption {
+    animation: marut-caption-pulse 2s ease-in-out infinite;
+}
+
+.marut-transition--exit .marut-transition-caption {
+    animation: marut-caption-out .25s ease forwards;
+}
+
+.marut-transition-rule {
+    position: absolute;
+    top: calc(50% + 119px);
+    width: 92px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #bd8a22, transparent);
+    transform: scaleX(0);
+}
+
+.marut-transition--typing .marut-transition-rule {
+    animation: marut-rule-in .5s ease .5s forwards;
+}
+
+.marut-transition--waiting .marut-transition-rule {
+    transform: scaleX(1);
+}
+
+.marut-transition--exit .marut-transition-rule {
+    animation: marut-rule-out .2s ease forwards;
+}
+
+.marut-transition-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.marut-transition-particle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 7px;
+    height: 7px;
+    border-radius: 2px;
+    background: #b98b3e;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.3);
+}
+
+.marut-transition--exit .marut-transition-particle {
+    animation: marut-particle-burst .72s cubic-bezier(.16, .7, .2, 1) both;
+}
+
+.marut-transition-particle--1 {
+    --tx: -190px;
+    --ty: -94px;
+    --rot: -120deg;
+}
+
+.marut-transition-particle--2 {
+    --tx: -138px;
+    --ty: 72px;
+    --rot: 90deg;
+    background: #6d814b;
+}
+
+.marut-transition-particle--3 {
+    --tx: -88px;
+    --ty: -118px;
+    --rot: 180deg;
+    width: 5px;
+    height: 5px;
+}
+
+.marut-transition-particle--4 {
+    --tx: -32px;
+    --ty: 112px;
+    --rot: 240deg;
+    background: #6d814b;
+}
+
+.marut-transition-particle--5 {
+    --tx: 28px;
+    --ty: -122px;
+    --rot: 65deg;
+}
+
+.marut-transition-particle--6 {
+    --tx: 84px;
+    --ty: 96px;
+    --rot: 145deg;
+    background: #6d814b;
+}
+
+.marut-transition-particle--7 {
+    --tx: 142px;
+    --ty: -72px;
+    --rot: 220deg;
+}
+
+.marut-transition-particle--8 {
+    --tx: 194px;
+    --ty: 88px;
+    --rot: 310deg;
+    background: #6d814b;
+}
+
+.marut-transition-particle--9 {
+    --tx: -218px;
+    --ty: 8px;
+    --rot: 130deg;
+    width: 4px;
+    height: 4px;
+}
+
+.marut-transition-particle--10 {
+    --tx: 222px;
+    --ty: -12px;
+    --rot: 200deg;
+    width: 5px;
+    height: 5px;
+}
+
+.marut-transition-particle--11 {
+    --tx: -62px;
+    --ty: -150px;
+    --rot: 275deg;
+    background: #d0a34e;
+}
+
+.marut-transition-particle--12 {
+    --tx: 68px;
+    --ty: 145px;
+    --rot: 350deg;
+    background: #d0a34e;
+}
+
+.marut-transition--exit {
+    animation: marut-overlay-out .68s ease forwards;
+}
+
+.marut-transition--exit .marut-transition-glow {
+    animation: marut-glow-out .68s ease forwards;
+}
+
+@keyframes marut-type-in {
+    to {
+        clip-path: inset(0 0 0 0);
+    }
+}
+
+@keyframes marut-caret-blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+@keyframes marut-caption-in {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes marut-caption-pulse {
+    50% {
+        opacity: .55;
+    }
+}
+
+@keyframes marut-caption-out {
+    to {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+}
+
+@keyframes marut-rule-in {
+    to {
+        transform: scaleX(1);
+    }
+}
+
+@keyframes marut-rule-out {
+    to {
+        opacity: 0;
+        transform: scaleX(.2);
+    }
+}
+
+@keyframes marut-word-breathe {
+    50% {
+        transform: scale(1.035);
+        filter: drop-shadow(0 0 16px rgb(185 139 62 / 18%));
+    }
+}
+
+@keyframes marut-word-burst {
+    0% {
+        opacity: 1;
+        filter: blur(0);
+        transform: scale(1);
+        letter-spacing: .16em;
+    }
+
+    35% {
+        opacity: 1;
+        filter: blur(0);
+        transform: scale(1.12);
+        letter-spacing: .23em;
+    }
+
+    100% {
+        opacity: 0;
+        filter: blur(9px);
+        transform: scale(1.55);
+        letter-spacing: .42em;
+    }
+}
+
+@keyframes marut-particle-burst {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(.2) rotate(0);
+    }
+
+    18% {
+        opacity: .95;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(var(--tx), var(--ty)) scale(1) rotate(var(--rot));
+    }
+}
+
+@keyframes marut-glow-breathe {
+
+    0%,
+    100% {
+        opacity: .48;
+        transform: scale(.94);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.02);
+    }
+}
+
+@keyframes marut-glow-out {
+    to {
+        opacity: 0;
+        transform: scale(1.24);
+    }
+}
+
+@keyframes marut-overlay-out {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .marut-transition-word {
+        font-size: clamp(44px, 13vw, 72px);
+    }
+
+    .marut-transition-caption {
+        top: calc(50% + 70px);
+        font-size: 9px;
+    }
+
+    .marut-transition-rule {
+        top: calc(50% + 94px);
+    }
+
+    .marut-transition-particle--1 {
+        --tx: -120px;
+        --ty: -78px;
+    }
+
+    .marut-transition-particle--2 {
+        --tx: -92px;
+        --ty: 70px;
+    }
+
+    .marut-transition-particle--3 {
+        --tx: -48px;
+        --ty: -100px;
+    }
+
+    .marut-transition-particle--4 {
+        --tx: -28px;
+        --ty: 105px;
+    }
+
+    .marut-transition-particle--5 {
+        --tx: 28px;
+        --ty: -105px;
+    }
+
+    .marut-transition-particle--6 {
+        --tx: 55px;
+        --ty: 88px;
+    }
+
+    .marut-transition-particle--7 {
+        --tx: 95px;
+        --ty: -72px;
+    }
+
+    .marut-transition-particle--8 {
+        --tx: 122px;
+        --ty: 78px;
+    }
+
+    .marut-transition-particle--9 {
+        --tx: -136px;
+        --ty: 0;
+    }
+
+    .marut-transition-particle--10 {
+        --tx: 136px;
+        --ty: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .marut-transition,
+    .marut-transition * {
+        animation-duration: .01ms !important;
+        animation-delay: 0ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

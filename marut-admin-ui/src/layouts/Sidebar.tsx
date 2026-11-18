@@ -3,41 +3,57 @@ import {
   LayoutDashboard, ShoppingBag, Repeat2, Sprout, Wheat, Truck,
   Package, ReceiptText, Wallet, Receipt, BookOpen,
   MessageSquareText, ChartNoAxesCombined, Users, Settings, History,
-  Leaf, X, PanelLeftClose, PanelLeftOpen
+  Leaf, X, PanelLeftClose, PanelLeftOpen, LogOut,
 } from "lucide-react";
 
-type SidebarProps = { open: boolean; collapsed: boolean; onClose: () => void; onToggleCollapse: () => void };
+type SidebarProps = {
+  open            : boolean;
+  collapsed       : boolean;
+  onClose         : () => void;
+  onToggleCollapse: () => void;
+  onLogout        : () => void;
+};
 
 const groups = [
   { label: "WORKSPACE", items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }] },
-  { label: "ORDERS", items: [
-    { to: "/orders"          , label: "Orders"          , icon: ShoppingBag },
-    { to: "/recurring-orders", label: "Recurring orders", icon: Repeat2 },
-  ]},
-  { label: "FARM OPERATIONS", items: [
-    { to: "/production", label: "Production", icon: Sprout },
-    { to: "/harvest"   , label: "Harvest"   , icon: Wheat  },
-    { to: "/fulfilment", label: "Fulfilment", icon: Truck  },
-  ]},
-  { label: "COMMERCIAL", items: [
-    { to: "/products", label: "Products", icon: Package     },
-    { to: "/invoices", label: "Invoices", icon: ReceiptText },
-    { to: "/payments", label: "Payments", icon: Wallet      },
-    { to: "/expenses", label: "Expenses", icon: Receipt     },
-    { to: "/cashbook", label: "Cashbook", icon: BookOpen    },
-  ]},
-  { label: "INSIGHTS", items: [
-    { to: "/feedback", label: "Customer feedback", icon: MessageSquareText },
-    { to: "/reports" , label: "Reports"         , icon: ChartNoAxesCombined },
-  ]},
-  { label: "ADMINISTRATION", items: [
-    { to: "/founders", label: "Founders", icon: Users     },
-    { to: "/settings", label: "Settings", icon: Settings  },
-    { to: "/audit", label: "Audit history", icon: History },
-  ]},
+  {
+    label: "ORDERS", items: [
+      { to: "/orders", label: "Orders", icon: ShoppingBag },
+      { to: "/recurring-orders", label: "Recurring orders", icon: Repeat2 },
+    ]
+  },
+  {
+    label: "FARM OPERATIONS", items: [
+      { to: "/production", label: "Production", icon: Sprout },
+      { to: "/harvest", label: "Harvest", icon: Wheat },
+      { to: "/fulfilment", label: "Fulfilment", icon: Truck },
+    ]
+  },
+  {
+    label: "COMMERCIAL", items: [
+      { to: "/products", label: "Products", icon: Package },
+      { to: "/invoices", label: "Invoices", icon: ReceiptText },
+      { to: "/payments", label: "Payments", icon: Wallet },
+      { to: "/expenses", label: "Expenses", icon: Receipt },
+      { to: "/cashbook", label: "Cashbook", icon: BookOpen },
+    ]
+  },
+  {
+    label: "INSIGHTS", items: [
+      { to: "/feedback", label: "Customer feedback", icon: MessageSquareText },
+      { to: "/reports", label: "Reports", icon: ChartNoAxesCombined },
+    ]
+  },
+  {
+    label: "ADMINISTRATION", items: [
+      { to: "/founders", label: "Founders", icon: Users },
+      { to: "/settings", label: "Settings", icon: Settings },
+      { to: "/audit", label: "Audit history", icon: History },
+    ]
+  },
 ];
 
-export function Sidebar({ open, collapsed, onClose, onToggleCollapse }: SidebarProps) {
+export function Sidebar({ open, collapsed, onClose, onToggleCollapse, onLogout }: SidebarProps) {
   return (
     <aside className={`sidebar${open ? " sidebar--open" : ""}${collapsed ? " sidebar--collapsed" : ""}`}>
       <div className="brand-row">
@@ -85,6 +101,10 @@ export function Sidebar({ open, collapsed, onClose, onToggleCollapse }: SidebarP
         ))}
       </nav>
       <div className="sidebar-bottom">
+        <button className="sidebar-logout" type="button" onClick={onLogout} title="Sign out" aria-label="Sign out">
+          <LogOut size={16} strokeWidth={1.8} />
+          <span>Sign out</span>
+        </button>
         <div className="environment-label"><span className="environment-dot" /> Workspace ready</div>
         <span className="sidebar-version">MARUT Admin · V2</span>
       </div>
