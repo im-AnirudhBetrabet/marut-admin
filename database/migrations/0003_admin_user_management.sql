@@ -3,7 +3,6 @@
 -- Migration: 0003_admin_user_management.sql
 --
 -- Adds atomic permission replacement and Staff-to-Owner promotion.
--- Run only after explicit approval.
 
 -- ---------------------------------------------------------------------------
 -- Replace a Staff user's complete permission set atomically.
