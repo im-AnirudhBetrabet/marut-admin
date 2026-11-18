@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 export function AuthUtilityLayout({ children }: { children: ReactNode }) {
     const brand = (
         <div className="auth-utility-brand">
-            <img className="auth-logo" src="/assets/marut-logo-gold.webp" alt="MARUT" />
+            <img className="auth-logo" src="/assets/marut-logo-gold.png" alt="MARUT" />
             <p className="auth-subtitle">Admin Portal</p>
         </div>
     );

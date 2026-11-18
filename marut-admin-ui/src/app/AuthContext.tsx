@@ -1,15 +1,8 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
-import type { Session } from "@supabase/supabase-js";
-import { ApiError, apiRequest } from "../services/api/client";
-import { supabase } from "../services/auth/supabase";
-import { AuthContext } from "./auth-context";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import type { Session }                                                      from "@supabase/supabase-js";
+import { ApiError, apiRequest }                                              from "../services/api/client";
+import { supabase }                                                          from "../services/auth/supabase";
+import { AuthContext }                                                       from "./auth-context";
 
 export type AdminProfile = {
   id          : string;
@@ -90,11 +83,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // password. Do not send them through the administrator profile check:
     // /auth/me may reject the recovery token and sign the user out before
     // the reset page can call supabase.auth.updateUser().
+    
     const isRecoverySession =
       typeof window !== "undefined" &&
       window.sessionStorage.getItem("marut-password-recovery-session") === "true";
 
-    if (isRecoverySession) {
+    // Invitation sessions must not be sent to /auth/me before acceptance.
+    // The invitee does not have an active MARUT admin profile yet.
+    // Keep the Supabase session alive so AcceptInvitePage can update the password
+    // and submit the invitation to the backend.
+    const isInvitationAcceptanceRoute =
+      typeof window !== "undefined" &&
+      window.location.pathname.replace(/\/+$/, "") === "/accept-invite";
+
+    if (isRecoverySession || isInvitationAcceptanceRoute) {
       setAdmin(null);
       setProfileError(null);
       setProfileLoading(false);

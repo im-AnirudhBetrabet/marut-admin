@@ -1,0 +1,82 @@
+/* User permission editor */
+.um-edit-user-identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    margin: 4px 0 20px;
+    border: 1px solid var(--border-subtle, rgba(65, 82, 58, .14));
+    border-radius: 12px;
+    background: var(--surface-soft, rgba(111, 132, 91, .06))
+}
+
+.um-edit-user-identity>span:nth-child(2) {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    flex: 1
+}
+
+.um-edit-user-identity strong {
+    color: var(--text-primary, #263326);
+    font-size: 13px
+}
+
+.um-edit-user-identity small {
+    color: var(--text-secondary, #778071);
+    font-size: 11px;
+    overflow-wrap: anywhere
+}
+
+.um-edit-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 150px;
+    color: var(--text-secondary, #778071);
+    font-size: 13px
+}
+
+.um-edit-permission-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-top: 16px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    background: rgba(111, 132, 91, .08);
+    color: var(--text-secondary, #687462);
+    font-size: 11px;
+    line-height: 1.55
+}
+
+.um-edit-permission-note svg {
+    flex: 0 0 auto;
+    color: var(--color-accent, #667b50)
+}
+
+.um-edit-permissions-modal {
+    max-height: min(86vh, 760px);
+    overflow-y: auto
+}
+
+.um-action-cell {
+    white-space: nowrap
+}
+
+.um-action-cell .um-text-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px
+}
+
+@media(max-width:640px) {
+    .um-edit-user-identity {
+        align-items: flex-start
+    }
+
+    .um-edit-user-identity .um-role {
+        margin-left: auto
+    }
+}

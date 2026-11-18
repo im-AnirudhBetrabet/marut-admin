@@ -1,6 +1,6 @@
+import type { ModuleKey, PermissionLevel } from "./config/permissions.js";
+export type { ModuleKey, PermissionLevel } from "./config/permissions.js";
 export type AdminRole       = 'owner' | 'staff';
-export type PermissionLevel = 'view' | 'manage';
-export type ModuleKey       = 'users' | 'verticals' | 'products' | 'pricing' | 'catalogue' | 'leads' | 'analytics';
 export interface AdminUser {
   id          : string;
   auth_user_id: string;

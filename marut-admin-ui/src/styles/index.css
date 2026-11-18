@@ -4,3 +4,6 @@
 @import "./pages.css";
 @import "./auth.css";
 @import "./transitions.css";
+@import "./user-management.css";
+@import "./user-permissions.css";
+@import "./user-management-actions.css";

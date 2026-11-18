@@ -6,6 +6,7 @@ import { authRouter }         from './modules/auth/auth.routes.js';
 import { usersRouter }        from './modules/users/users.routes.js';
 import { acceptInviteRouter } from './modules/users/accept-invite.routes.js';
 import { HttpError }          from './utils/http.js';
+import { metaRouter }         from './modules/meta.routes.js';
 
 export const app = express();
 const helmetMiddleware = (
@@ -26,7 +27,7 @@ app.get('/health'            , (_req, res) => res.json({ status: 'ok', service: 
 app.use('/api/v1/auth'       , authRouter);
 app.use('/api/v1/users'      , usersRouter);
 app.use('/api/v1/invitations', acceptInviteRouter);
-
+app.use('/api/v1/meta'       , metaRouter);
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (err instanceof HttpError) {
     return res.status(err.status).json({ 

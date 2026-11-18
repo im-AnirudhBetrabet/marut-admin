@@ -1,0 +1,31 @@
+/* User-management account actions */
+.um-row-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+}
+
+.um-row-actions .um-text-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.um-confirm-modal {
+    max-width: 520px;
+}
+
+.um-confirm-modal .um-modal-footer {
+    margin-top: 22px;
+}
+
+@media (max-width: 760px) {
+    .um-row-actions {
+        min-width: 170px;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+}

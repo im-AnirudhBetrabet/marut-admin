@@ -1,10 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent }                           from "react";
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, Sprout } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ApiError, apiRequest } from "../../services/api/client";
-import { isSupabaseConfigured, supabase } from "../../services/auth/supabase";
-import { useAuth } from "../../app/useAuth";
-import { MarutTransition } from "../../components/branding/MarutTransition";
+import { Link, useLocation, useNavigate }                     from "react-router-dom";
+import { ApiError, apiRequest }                               from "../../services/api/client";
+import { isSupabaseConfigured, supabase }                     from "../../services/auth/supabase";
+import { useAuth }                                            from "../../app/useAuth";
+import { MarutTransition }                                    from "../../components/branding/MarutTransition";
 
 type CheckEmailResponse = { authorised: boolean; can_login: boolean };
 
@@ -105,7 +105,7 @@ export function LoginPage() {
         </div>
         <div className="auth-form-panel">
           <div className="auth-brand">
-            <img className="auth-logo" src="/assets/marut-logo-gold.webp" alt="MARUT" />
+            <img className="auth-logo" src="/assets/marut-logo-gold.png" alt="MARUT" />
             <p className="auth-subtitle">Admin Portal</p>
             <p className="auth-tagline">Farm <span>•</span> Orders <span>•</span> Customers <span>•</span> Operations</p>
           </div>
@@ -167,7 +167,7 @@ export function LoginPage() {
       </section>
       <section className="auth-mobile-card" aria-label="MARUT Admin sign in">
         <div className="auth-mobile-brand">
-          <img className="auth-logo" src="/assets/marut-logo-gold.webp" alt="MARUT" />
+          <img className="auth-logo" src="/assets/marut-logo-gold.png" alt="MARUT" />
           <p className="auth-subtitle">Admin Portal</p>
           <p className="auth-tagline">Farm <span>•</span> Orders <span>•</span> Customers <span>•</span> Operations</p>
         </div>

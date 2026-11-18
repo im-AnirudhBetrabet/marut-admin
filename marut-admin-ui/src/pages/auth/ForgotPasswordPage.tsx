@@ -1,14 +1,14 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent }            from "react";
 import { ArrowLeft, ArrowRight, Mail, Sprout } from "lucide-react";
-import { Link } from "react-router-dom";
-import { isSupabaseConfigured, supabase } from "../../services/auth/supabase";
-import { AuthUtilityLayout } from "../../components/auth/AuthUtilityLayout";
+import { Link }                                from "react-router-dom";
+import { isSupabaseConfigured, supabase }      from "../../services/auth/supabase";
+import { AuthUtilityLayout }                   from "../../components/auth/AuthUtilityLayout";
 
 export function ForgotPasswordPage() {
-    const [email, setEmail] = useState("");
+    const [email     , setEmail     ] = useState("");
     const [submitting, setSubmitting] = useState(false);
-    const [sent, setSent] = useState(false);
-    const [error, setError] = useState("");
+    const [sent      , setSent      ] = useState(false);
+    const [error     , setError     ] = useState("");
 
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();

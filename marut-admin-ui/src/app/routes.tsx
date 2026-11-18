@@ -7,7 +7,8 @@ import { LoginPage }               from "../pages/auth/LoginPage";
 import { ForgotPasswordPage }      from "../pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage }       from "../pages/auth/ResetPasswordPage";
 import { RequireAuth }             from "../components/auth/RequireAuth";
-
+import { UserManagementPage }      from "../pages/users/UserManagementPage";
+import { AcceptInvitePage }        from "../pages/auth/AcceptInvitePage";
 const placeholders = [
   ["orders", "Orders"],
   ["recurring-orders", "Recurring orders"],
@@ -32,10 +33,12 @@ export function AppRoutes() {
       <Route path="/login"           element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password"  element={<ResetPasswordPage />} />
+      <Route path="/accept-invite"   element={<AcceptInvitePage />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="dashboard" element={<DashboardPage />}         />
+          <Route path="users"     element={<UserManagementPage/>}     />
           {placeholders.map(([path, title]) => (
             <Route key={path} path={path} element={<PlaceholderPage title={title} />} />
           ))}

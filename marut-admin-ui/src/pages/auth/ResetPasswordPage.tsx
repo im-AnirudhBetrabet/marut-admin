@@ -1,24 +1,24 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent }             from "react";
 import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import type { Session } from "@supabase/supabase-js";
-import { supabase } from "../../services/auth/supabase";
-import { AuthUtilityLayout } from "../../components/auth/AuthUtilityLayout";
+import { Link, useNavigate }                               from "react-router-dom";
+import type { Session }                                    from "@supabase/supabase-js";
+import { supabase }                                        from "../../services/auth/supabase";
+import { AuthUtilityLayout }                               from "../../components/auth/AuthUtilityLayout";
 
 const RECOVERY_MARKER = "marut-password-recovery-session";
 
 export function ResetPasswordPage() {
     const [recoverySession, setRecoverySession] = useState<Session | null>(null);
-    const [checking, setChecking] = useState(true);
-    const [password, setPassword] = useState("");
+    const [checking       , setChecking       ] = useState(true);
+    const [password       , setPassword       ] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirm, setShowConfirm] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
-    const [success, setSuccess] = useState(false);
-    const [error, setError] = useState("");
-    const [recoveryError, setRecoveryError] = useState("");
-    const navigate = useNavigate();
+    const [showPassword   , setShowPassword   ] = useState(false);
+    const [showConfirm    , setShowConfirm    ] = useState(false);
+    const [submitting     , setSubmitting     ] = useState(false);
+    const [success        , setSuccess        ] = useState(false);
+    const [error          , setError          ] = useState("");
+    const [recoveryError, setRecoveryError    ] = useState("");
+    const navigate                              = useNavigate();
 
     useEffect(() => {
         let active = true;
