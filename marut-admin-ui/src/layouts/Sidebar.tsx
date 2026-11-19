@@ -4,7 +4,7 @@ import {
   LayoutDashboard, ShoppingBag, Repeat2, Sprout, Wheat, Truck,
   Package, ReceiptText, Wallet, Receipt, BookOpen, MessageSquareText,
   ChartNoAxesCombined, Users, Settings, History, X, PanelLeftClose,
-  PanelLeftOpen, LogOut,
+  PanelLeftOpen, LogOut, Layers
 } from "lucide-react";
 
 type SidebarProps = {
@@ -45,13 +45,15 @@ const groups = [
 ];
 
 export function Sidebar({ open, collapsed, onClose, onToggleCollapse, onLogout }: SidebarProps) {
-  const { admin }    = useAuth();
-  const displayName  = admin?.user?.display_name?.trim() || "Administrator";
-  const initial      = displayName.charAt(0).toUpperCase();
-  const canViewUsers = admin?.role === "owner" || (Array.isArray(admin?.permissions) && admin.permissions.some(
+  const { admin }        = useAuth();
+  const displayName      = admin?.user?.display_name?.trim() || "Administrator";
+  const initial          = displayName.charAt(0).toUpperCase();
+  const canViewUsers     = admin?.role === "owner" || (Array.isArray(admin?.permissions) && admin.permissions.some(
     (permission) => permission.module_key === "users" && (permission.level === "view" || permission.level === "manage"),
   ));
-
+  const canViewVerticals = admin?.role === "owner" || (Array.isArray(admin?.permissions) && admin.permissions.some(
+    (permission) => permission.module_key === "verticals" && (permission.level === "view" || permission.level === "manage"),
+  ));
   return (
     <aside className={`sidebar${open ? " sidebar--open" : ""}${collapsed ? " sidebar--collapsed" : ""}`}>
       <div className="brand-row">
@@ -80,12 +82,16 @@ export function Sidebar({ open, collapsed, onClose, onToggleCollapse, onLogout }
       </div>
 
       <nav className="side-nav" aria-label="Main navigation">
-        {canViewUsers && <section className="nav-group">
+        {(canViewUsers || canViewVerticals) && <section className="nav-group">
           <h2 className="nav-group-label">ADMINISTRATION</h2>
-          <NavLink to="/users" onClick={onClose} title="User management" aria-label="User management"
+          {canViewUsers && <NavLink to="/users" onClick={onClose} title="User management" aria-label="User management"
             className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}>
             <Users size={16} strokeWidth={1.8} /><span>User management</span>
-          </NavLink>
+          </NavLink>}
+          {canViewVerticals && <NavLink to="/verticals" onClick={onClose} title="Vertical management" aria-label="Vertical management"
+            className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}>
+            <Layers size={16} strokeWidth={1.8} /><span>Vertical management</span>
+          </NavLink>}
         </section>}
         {groups.map((group) => (
           <section className="nav-group" key={group.label}>

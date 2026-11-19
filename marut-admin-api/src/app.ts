@@ -7,6 +7,7 @@ import { usersRouter }        from './modules/users/users.routes.js';
 import { acceptInviteRouter } from './modules/users/accept-invite.routes.js';
 import { HttpError }          from './utils/http.js';
 import { metaRouter }         from './modules/meta.routes.js';
+import { verticalsRouter }    from './modules/verticals/verticals.routes.js';
 
 export const app = express();
 const helmetMiddleware = (
@@ -28,6 +29,8 @@ app.use('/api/v1/auth'       , authRouter);
 app.use('/api/v1/users'      , usersRouter);
 app.use('/api/v1/invitations', acceptInviteRouter);
 app.use('/api/v1/meta'       , metaRouter);
+app.use('/api/v1/verticals'  , verticalsRouter);
+
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (err instanceof HttpError) {
     return res.status(err.status).json({ 
