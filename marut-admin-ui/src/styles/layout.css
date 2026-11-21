@@ -457,7 +457,8 @@
     border: 0;
   }
 
-  .app-main {
+  .app-main,
+  .app-shell--sidebar-collapsed .app-main {
     margin-left: 0;
   }
 

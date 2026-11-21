@@ -8,3 +8,7 @@
 @import "./user-permissions.css";
 @import "./user-management-actions.css";
 @import "./vertical-management.css";
+@import "./products.css";
+@import "./categories.css";
+@import "./global-minimum-floors.css";
+@import "./product-pricing.css";

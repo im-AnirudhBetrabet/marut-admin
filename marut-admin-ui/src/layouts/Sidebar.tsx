@@ -4,7 +4,7 @@ import {
   LayoutDashboard, ShoppingBag, Repeat2, Sprout, Wheat, Truck,
   Package, ReceiptText, Wallet, Receipt, BookOpen, MessageSquareText,
   ChartNoAxesCombined, Users, Settings, History, X, PanelLeftClose,
-  PanelLeftOpen, LogOut, Layers
+  PanelLeftOpen, LogOut, Layers, FolderTree, ShieldCheck
 } from "lucide-react";
 
 type SidebarProps = {
@@ -28,6 +28,7 @@ const groups = [
   ]},
   { label: "COMMERCIAL", items: [
     { to: "/products", label: "Products", icon: Package },
+    { to: "/products/categories", label: "Categories", icon: FolderTree },
     { to: "/invoices", label: "Invoices", icon: ReceiptText },
     { to: "/payments", label: "Payments", icon: Wallet },
     { to: "/expenses", label: "Expenses", icon: Receipt },
@@ -53,6 +54,9 @@ export function Sidebar({ open, collapsed, onClose, onToggleCollapse, onLogout }
   ));
   const canViewVerticals = admin?.role === "owner" || (Array.isArray(admin?.permissions) && admin.permissions.some(
     (permission) => permission.module_key === "verticals" && (permission.level === "view" || permission.level === "manage"),
+  ));
+  const canViewPricing = admin?.role === "owner" || admin?.permissions === "all" || (Array.isArray(admin?.permissions) && admin.permissions.some(
+    (permission) => permission.module_key === "pricing" && (permission.level === "view" || permission.level === "manage"),
   ));
   return (
     <aside className={`sidebar${open ? " sidebar--open" : ""}${collapsed ? " sidebar--collapsed" : ""}`}>
@@ -104,6 +108,13 @@ export function Sidebar({ open, collapsed, onClose, onToggleCollapse, onLogout }
             ))}
           </section>
         ))}
+        {canViewPricing && <section className="nav-group">
+          <h2 className="nav-group-label">PRICING</h2>
+          <NavLink to="/products/pricing/global-minimum-floors" onClick={onClose} title="Minimum price floors" aria-label="Minimum price floors"
+            className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}>
+            <ShieldCheck size={16} strokeWidth={1.8} /><span>Minimum price floors</span>
+          </NavLink>
+        </section>}
       </nav>
       <div className="sidebar-bottom">
         <button className="sidebar-logout" type="button" onClick={onLogout} title="Sign out" aria-label="Sign out">
