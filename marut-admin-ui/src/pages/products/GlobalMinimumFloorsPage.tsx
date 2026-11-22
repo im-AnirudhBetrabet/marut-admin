@@ -14,7 +14,10 @@ const localDateTimeInput = (value?: string | null) => {
     const part = (type: string) => parts.find((item) => item.type === type)?.value ?? "";
     return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
 };
-const toIso = (value: string) => `${value}:00+05:30`;
+const toIso = (value: string) => {
+    const normalized = value.length === 16 ? `${value}:00` : value;
+    return `${normalized}+05:30`;
+};
 const floorStatus = (floor: GlobalMinimumFloor): string => {
     const apiStatus = floor.period_status ?? floor.status;
     if (apiStatus) return apiStatus.toLowerCase();
@@ -26,12 +29,27 @@ const floorStatus = (floor: GlobalMinimumFloor): string => {
 const errorMessage = (error: unknown) => {
     if (error instanceof ApiError) {
         const body = error.details as { error?: { code?: string } } | undefined;
-        const code = body?.error?.code;
-        if (code === "INSUFFICIENT_PERMISSION") return "Only an Owner with pricing management access can make this change.";
-        if (code === "EFFECTIVE_FLOOR_IMMUTABLE") return "An effective floor cannot be edited. Create a new scheduled floor instead.";
-        if (code === "FLOOR_NOT_SCHEDULED") return "Only a scheduled floor can be changed or cancelled.";
-        if (code === "GLOBAL_FLOOR_TIMELINE_CONFLICT") return "This change conflicts with the global floor timeline. Refresh the timeline and try again.";
-        if (code === "REASON_REQUIRED") return "Please provide a reason for this change.";
+        const code = (error as { code?: string }).code ?? body?.error?.code;
+        if (code === "OWNER_REQUIRED" || code === "INSUFFICIENT_PERMISSION") {
+            return "Only an Owner/Admin with pricing management access can make this change.";
+        }
+        if (code === "FLOOR_IMMUTABLE") {
+            return "An effective or cancelled floor cannot be changed or cancelled. Create a new scheduled floor instead.";
+        }
+        if (code === "INVALID_FLOOR_PERIOD_OR_AMOUNT") {
+            return "Enter a valid floor amount and an effective date in the future.";
+        }
+        if (
+            code === "FLOOR_DATE_CONFLICTS_WITH_NEXT_PERIOD" ||
+            code === "FLOOR_DATE_CONFLICTS_WITH_PREVIOUS_PERIOD" ||
+            code === "GLOBAL_FLOOR_INTERVAL_NOT_FOUND" ||
+            code === "GLOBAL_FLOOR_CHAIN_INTEGRITY_ERROR"
+        ) {
+            return "This change conflicts with the global floor timeline. Refresh the timeline and try again.";
+        }
+        if (code === "REASON_REQUIRED") {
+            return "Please provide a reason for this change.";
+        }
         return error.message;
     }
     return error instanceof Error ? error.message : "Something went wrong. Please try again.";

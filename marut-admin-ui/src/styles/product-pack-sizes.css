@@ -1,0 +1,186 @@
+.product-pack-sizes-panel {
+    display: grid;
+    gap: 17px;
+}
+
+.product-pack-sizes-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.product-pack-sizes-heading h2 {
+    margin: 7px 0 5px;
+    color: var(--color-ink);
+    font-size: 22px;
+    letter-spacing: -.035em;
+}
+
+.product-pack-sizes-heading p,
+.product-pack-size-list-heading p {
+    margin: 0;
+    color: var(--color-ink-secondary);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.product-pack-size-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 11px;
+}
+
+.product-pack-size-stats article {
+    display: grid;
+    gap: 7px;
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+}
+
+.product-pack-size-stats span {
+    color: var(--color-ink-muted);
+    font-size: 10px;
+}
+
+.product-pack-size-stats strong {
+    color: var(--color-ink);
+    font-size: 25px;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+}
+
+.product-pack-size-add {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 17px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+}
+
+.product-pack-size-add label {
+    display: grid;
+    gap: 7px;
+    color: var(--color-ink);
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.product-pack-size-add label>div {
+    display: flex;
+    align-items: center;
+    width: min(100%, 270px);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    overflow: hidden;
+}
+
+.product-pack-size-add input {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 11px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--color-ink);
+    font: 13px var(--font-sans);
+}
+
+.product-pack-size-add label b {
+    padding: 0 12px;
+    color: var(--color-ink-muted);
+    font-size: 11px;
+    font-weight: 550;
+}
+
+.product-pack-size-list-heading h3 {
+    margin: 0 0 4px;
+    color: var(--color-ink);
+    font-size: 14px;
+}
+
+.product-pack-size-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+}
+
+.product-pack-size-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 11px;
+}
+
+.product-pack-size-table th {
+    padding: 12px 14px;
+    background: var(--color-surface-subtle);
+    color: var(--color-ink-muted);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.product-pack-size-table td {
+    padding: 13px 14px;
+    border-top: 1px solid var(--color-border);
+    color: var(--color-ink-secondary);
+    white-space: nowrap;
+}
+
+.product-pack-size-table td strong {
+    color: var(--color-ink);
+    font-size: 12px;
+}
+
+.product-pack-size-alert,
+.product-pack-size-success {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 11px 13px;
+    border: 1px solid color-mix(in srgb, var(--color-danger) 30%, var(--color-border));
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-danger) 7%, var(--color-surface));
+    color: var(--color-danger);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.product-pack-size-success {
+    border-color: var(--color-icon-surface-border);
+    background: var(--color-brand-soft);
+    color: var(--color-success);
+}
+
+@media (max-width: 760px) {
+    .product-pack-size-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .product-pack-size-add {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .product-pack-size-add label>div {
+        width: 100%;
+    }
+
+    .product-pack-size-add>button {
+        width: 100%;
+    }
+
+    .product-pack-size-table {
+        min-width: 650px;
+    }
+}

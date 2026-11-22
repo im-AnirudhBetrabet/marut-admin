@@ -41,7 +41,7 @@ app.use('/api/v1/verticals'                               , verticalsRouter);
 app.use('/api/v1/products/categories'                     , categoriesRouter);
 app.use('/api/v1/products'                                , productsRouter);
 app.use('/api/v1/products/:productId/pack-sizes'          , packSizesRouter);
-app.use('api/v1/products/:productId/images'               , productImagesRouter);
+app.use('/api/v1/products/:productId/images'              , productImagesRouter);
 app.use('/api/v1/products/:productId/minimum-price-floors', minimumPriceFloorsRouter);
 app.use('/api/v1/pricing/global-minimum-floors'           , globalPriceFloorsRouter);
 app.use('/api/v1/products/:productId/prices'              , pricingRouter);

@@ -11,7 +11,7 @@ const dateLabel = (value?: string | null) => value ? new Intl.DateTimeFormat("en
 const errorMessage = (error: unknown) => {
     if (error instanceof ApiError) {
         const body = error.details as { error?: { code?: string } } | undefined;
-        const code = body?.error?.code;
+        const code = (error as { code?: string }).code ?? body?.error?.code;
         if (code === "CATEGORY_NAME_ALREADY_EXISTS") return "A category with this name already exists for that vertical.";
         if (code === "CATEGORY_IN_USE") return "This category has historical product references and cannot be deleted. Deactivate it instead.";
         if (code === "VERTICAL_NOT_OPERATIONAL") return "Choose an Operational vertical.";
@@ -107,24 +107,504 @@ export function CategoriesPage() {
         finally { setBusy(false); }
     };
 
-    return <main className="page-shell categories-page">
-        <div className="page-heading categories-heading"><div><div className="eyebrow">PRODUCT CATALOGUE</div><h1>Categories</h1><p>Organise products across your business verticals.</p></div><div className="categories-heading-actions"><button className="button button--secondary" type="button" onClick={() => void load()}><RefreshCw size={15} /> Refresh</button>{canManage && <button className="button button--primary" type="button" onClick={() => openDialog("create", null)}><Plus size={16} /> Create category</button>}</div></div>
-        {error && !dialog && <div className="categories-alert categories-alert--error"><AlertCircle size={17} />{error}</div>}
-        {notice && <div className="categories-alert categories-alert--success"><Check size={17} />{notice}<button type="button" onClick={() => setNotice("")} aria-label="Dismiss"><X size={15} /></button></div>}
-        <section className="categories-metrics"><article><span>Total categories</span><strong>{categories.length}</strong><small>Across all verticals</small></article><article><span>Active</span><strong>{activeCount}</strong><small>Available for catalogue use</small></article><article><span>Inactive</span><strong>{inactiveCount}</strong><small>Retained for history</small></article></section>
-        <section className="categories-layout"><div className="categories-list-panel"><div className="categories-toolbar"><label className="categories-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search categories or verticals" /></label><select aria-label="Filter by vertical" value={verticalFilter} onChange={(event) => setVerticalFilter(event.target.value)}><option value="all">All verticals</option>{verticals.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><select aria-label="Filter by status" value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
-            {loading ? <div className="categories-empty">Loading categories…</div> : visible.length === 0 ? <div className="categories-empty"><FolderTree size={28} /><strong>No categories found</strong><span>Try changing your filters or create a category.</span></div> : <div className="categories-table-wrap"><table className="categories-table"><thead><tr><th>Category</th><th>Vertical</th><th>Status</th><th>Updated</th><th></th></tr></thead><tbody>{visible.map((item) => <tr key={item.id} className={selected?.id === item.id ? "is-selected" : ""} onClick={() => setSelected(item)}><td><strong>{item.name}</strong><small>{item.description || "No description"}</small></td><td>{item.vertical?.name ?? "—"}</td><td><span className={`category-status category-status--${item.status}`}>{item.status}</span></td><td>{dateLabel(item.updated_at)}</td><td><ChevronRight size={16} /></td></tr>)}</tbody></table></div>}</div>
-            <aside className="category-detail-panel">{selected ? <><div className="category-detail-top"><div><span className="eyebrow">CATEGORY DETAILS</span><h2>{selected.name}</h2></div><span className={`category-status category-status--${selected.status}`}>{selected.status}</span></div><p className="category-detail-description">{selected.description || "No description has been added."}</p><dl className="category-detail-fields"><div><dt>Business vertical</dt><dd>{selected.vertical?.name ?? "—"}</dd></div><div><dt>Vertical status</dt><dd>{selected.vertical?.status?.replaceAll("_", " ") ?? "—"}</dd></div><div><dt>Created</dt><dd>{dateLabel(selected.created_at)}</dd></div><div><dt>Last updated</dt><dd>{dateLabel(selected.updated_at)}</dd></div></dl>
-                {canManage && <div className="category-actions"><button type="button" onClick={() => openDialog("edit")} className="button button--secondary">Edit details</button>{canReassign && <button type="button" onClick={() => openDialog("reassign")} className="button button--secondary"><ArrowRightLeft size={15} /> Reassign</button>}<button type="button" onClick={() => openDialog("status")} className="button button--secondary">{selected.status === "active" ? "Deactivate" : "Activate"}</button><button type="button" onClick={() => openDialog("delete")} className="button button--danger"><Trash2 size={15} /> Delete</button></div>}
-                <div className="category-history"><h3><History size={16} /> Recent activity</h3>{historyLoading ? <p className="muted">Loading history…</p> : history.length === 0 ? <p className="muted">No history available.</p> : history.slice(0, 6).map((event) => <article key={event.id}><span className="history-dot" /><div><strong>{event.action ?? event.event_type ?? "Category updated"}</strong><p>{event.reason || "No reason recorded"}</p><small>{event.actor_name ?? (typeof event.actor === "string" ? event.actor : event.actor?.display_name) ?? event.changed_by ?? "Administrator"} · {dateLabel(event.changed_at ?? event.created_at)}</small></div></article>)}</div>
-            </> : <div className="categories-empty"><FolderTree size={28} /><strong>Select a category</strong><span>Choose a category to view its details and history.</span></div>}</aside></section>
-        {dialog && selected !== null && dialog !== "create" && <div className="category-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDialog(null); }}><form className="category-modal" onSubmit={submit}><div className="category-modal-heading"><div><span className="eyebrow">CATEGORY MANAGEMENT</span><h2>{dialog === "edit" ? "Edit category" : dialog === "reassign" ? "Reassign vertical" : dialog === "status" ? `${selected.status === "active" ? "Deactivate" : "Activate"} category` : "Delete category"}</h2></div><button type="button" className="icon-button" onClick={() => setDialog(null)} aria-label="Close"><X size={18} /></button></div>
-            {dialog === "edit" && <><label>Category name<input value={name} onChange={(event) => setName(event.target.value)} required maxLength={100} /></label><label>Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} /></label>{name.trim() !== selected.name && <label>Reason for name change<input value={reason} onChange={(event) => setReason(event.target.value)} required /></label>}</>}
-            {dialog === "reassign" && <><p>Move <strong>{selected.name}</strong> to another Operational vertical. Historical transactions will not be rewritten.</p><label>New vertical<select value={verticalId} onChange={(event) => setVerticalId(event.target.value)} required><option value="">Choose a vertical</option>{verticals.filter((item) => item.id !== selected.vertical_id).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label>Reason<input value={reason} onChange={(event) => setReason(event.target.value)} required /></label></>}
-            {dialog === "status" && <><p>{selected.status === "active" ? "Products under this category will become unavailable for new orders. Their product status will remain unchanged." : "This category will become available for new product classification if its vertical is Operational."}</p><label>Reason<input value={reason} onChange={(event) => setReason(event.target.value)} required /></label></>}
-            {dialog === "delete" && <><p className="category-danger-copy"><ShieldAlert size={18} /> Delete <strong>{selected.name}</strong>? This cannot be undone. Categories with historical product references cannot be deleted.</p><label>Reason<input value={reason} onChange={(event) => setReason(event.target.value)} required /></label></>}
-            {error && <div className="categories-alert categories-alert--error"><AlertCircle size={16} />{error}</div>}<div className="category-modal-actions"><button type="button" className="button button--secondary" onClick={() => setDialog(null)}>Cancel</button><button type="submit" disabled={busy || (dialog === "reassign" && !verticalId)} className={`button ${dialog === "delete" ? "button--danger" : "button--primary"}`}>{busy ? "Saving…" : dialog === "delete" ? "Delete category" : "Save changes"}</button></div>
-        </form></div>}
-        {dialog === "create" && <div className="category-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDialog(null); }}><form className="category-modal" onSubmit={submit}><div className="category-modal-heading"><div><span className="eyebrow">PRODUCT CATALOGUE</span><h2>Create category</h2></div><button type="button" className="icon-button" onClick={() => setDialog(null)} aria-label="Close"><X size={18} /></button></div><label>Business vertical<select value={verticalId} onChange={(event) => setVerticalId(event.target.value)} required><option value="">Choose an Operational vertical</option>{verticals.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label>Category name<input value={name} onChange={(event) => setName(event.target.value)} required maxLength={100} placeholder="e.g. Broccoli" /></label><label>Description <span className="muted">(optional)</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} placeholder="A short description of this category" /></label>{error && <div className="categories-alert categories-alert--error"><AlertCircle size={16} />{error}</div>}<div className="category-modal-actions"><button type="button" className="button button--secondary" onClick={() => setDialog(null)}>Cancel</button><button type="submit" disabled={busy || !verticalId} className="button button--primary">{busy ? "Creating…" : "Create category"}</button></div></form></div>}
-    </main>;
+    return (
+    <main className="page-shell categories-page">
+        <div className="page-heading categories-heading">
+            <div>
+            <div className="eyebrow">PRODUCT CATALOGUE</div>
+            <h1>Categories</h1>
+            <p>Organise products across your business verticals.</p>
+            </div>
+            <div className="categories-heading-actions">
+            <button
+                className="button button--secondary"
+                type="button"
+                onClick={() => void load()}
+            >
+                <RefreshCw size={15} /> Refresh
+            </button>
+            {canManage && (
+                <button
+                className="button button--primary"
+                type="button"
+                onClick={() => openDialog("create", null)}
+                >
+                <Plus size={16} /> Create category
+                </button>
+            )}
+            </div>
+        </div>
+        {error && !dialog && (
+            <div className="categories-alert categories-alert--error">
+            <AlertCircle size={17} />
+            {error}
+            </div>
+        )}
+        {notice && (
+            <div className="categories-alert categories-alert--success">
+            <Check size={17} />
+            {notice}
+            <button type="button" onClick={() => setNotice("")} aria-label="Dismiss">
+                <X size={15} />
+            </button>
+            </div>
+        )}
+        <section className="categories-metrics">
+            <article>
+            <span>Total categories</span>
+            <strong>{categories.length}</strong>
+            <small>Across all verticals</small>
+            </article>
+            <article>
+            <span>Active</span>
+            <strong>{activeCount}</strong>
+            <small>Available for catalogue use</small>
+            </article>
+            <article>
+            <span>Inactive</span>
+            <strong>{inactiveCount}</strong>
+            <small>Retained for history</small>
+            </article>
+        </section>
+        <section className="categories-layout">
+            <div className="categories-list-panel">
+            <div className="categories-toolbar">
+                <label className="categories-search">
+                <Search size={16} />
+                <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search categories or verticals"
+                />
+                </label>
+                <select
+                aria-label="Filter by vertical"
+                value={verticalFilter}
+                onChange={(event) => setVerticalFilter(event.target.value)}
+                >
+                <option value="all">All verticals</option>
+                {verticals.map((item) => (
+                    <option key={item.id} value={item.id}>
+                    {item.name}
+                    </option>
+                ))}
+                </select>
+                <select
+                aria-label="Filter by status"
+                value={status}
+                onChange={(event) => setStatus(event.target.value)}
+                >
+                <option value="all">All statuses</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                </select>
+            </div>
+            {loading ? (
+                <div className="categories-empty">Loading categories…</div>
+            ) : visible.length === 0 ? (
+                <div className="categories-empty">
+                <FolderTree size={28} />
+                <strong>No categories found</strong>
+                <span>Try changing your filters or create a category.</span>
+                </div>
+            ) : (
+                <div className="categories-table-wrap">
+                <table className="categories-table">
+                    <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Vertical</th>
+                        <th>Status</th>
+                        <th>Updated</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {visible.map((item) => (
+                        <tr
+                        key={item.id}
+                        className={selected?.id === item.id ? "is-selected" : ""}
+                        onClick={() => setSelected(item)}
+                        >
+                        <td>
+                            <strong>{item.name}</strong>
+                            <small>{item.description || "No description"}</small>
+                        </td>
+                        <td>{item.vertical?.name ?? "—"}</td>
+                        <td>
+                            <span
+                            className={`category-status category-status--${item.status}`}
+                            >
+                            {item.status}
+                            </span>
+                        </td>
+                        <td>{dateLabel(item.updated_at)}</td>
+                        <td>
+                            <ChevronRight size={16} />
+                        </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+                </div>
+            )}
+            </div>
+            <aside className="category-detail-panel">
+            {selected ? (
+                <>
+                <div className="category-detail-top">
+                    <div>
+                    <span className="eyebrow">CATEGORY DETAILS</span>
+                    <h2>{selected.name}</h2>
+                    </div>
+                    <span
+                    className={`category-status category-status--${selected.status}`}
+                    >
+                    {selected.status}
+                    </span>
+                </div>
+                <p className="category-detail-description">
+                    {selected.description || "No description has been added."}
+                </p>
+                <dl className="category-detail-fields">
+                    <div>
+                    <dt>Business vertical</dt>
+                    <dd>{selected.vertical?.name ?? "—"}</dd>
+                    </div>
+                    <div>
+                    <dt>Vertical status</dt>
+                    <dd>{selected.vertical?.status?.replaceAll("_", " ") ?? "—"}</dd>
+                    </div>
+                    <div>
+                    <dt>Created</dt>
+                    <dd>{dateLabel(selected.created_at)}</dd>
+                    </div>
+                    <div>
+                    <dt>Last updated</dt>
+                    <dd>{dateLabel(selected.updated_at)}</dd>
+                    </div>
+                </dl>
+                {canManage && (
+                    <div className="category-actions">
+                    <button
+                        type="button"
+                        onClick={() => openDialog("edit")}
+                        className="button button--secondary"
+                    >
+                        Edit details
+                    </button>
+                    {canReassign && (
+                        <button
+                        type="button"
+                        onClick={() => openDialog("reassign")}
+                        className="button button--secondary"
+                        >
+                        <ArrowRightLeft size={15} /> Reassign
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => openDialog("status")}
+                        className="button button--secondary"
+                    >
+                        {selected.status === "active" ? "Deactivate" : "Activate"}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => openDialog("delete")}
+                        className="button button--danger"
+                    >
+                        <Trash2 size={15} /> Delete
+                    </button>
+                    </div>
+                )}
+                <div className="category-history">
+                    <h3>
+                    <History size={16} /> Recent activity
+                    </h3>
+                    {historyLoading ? (
+                    <p className="muted">Loading history…</p>
+                    ) : history.length === 0 ? (
+                    <p className="muted">No history available.</p>
+                    ) : (
+                    history.slice(0, 6).map((event) => (
+                        <article key={event.id}>
+                        <span className="history-dot" />
+                        <div>
+                            <strong>
+                            {event.action ?? event.event_type ?? "Category updated"}
+                            </strong>
+                            <p>{event.reason || "No reason recorded"}</p>
+                            <small>
+                            {event.actor_name ??
+                                (typeof event.actor === "string"
+                                ? event.actor
+                                : event.actor?.display_name) ??
+                                event.changed_by ??
+                                "Administrator"}{" "}
+                            · {dateLabel(event.changed_at ?? event.created_at)}
+                            </small>
+                        </div>
+                        </article>
+                    ))
+                    )}
+                </div>
+                </>
+            ) : (
+                <div className="categories-empty">
+                <FolderTree size={28} />
+                <strong>Select a category</strong>
+                <span>Choose a category to view its details and history.</span>
+                </div>
+            )}
+            </aside>
+        </section>
+        {dialog && selected !== null && dialog !== "create" && (
+            <div
+            className="category-modal-backdrop"
+            role="presentation"
+            onMouseDown={(event) => {
+                if (event.target === event.currentTarget) setDialog(null);
+            }}
+            >
+            <form className="category-modal" onSubmit={submit}>
+                <div className="category-modal-heading">
+                <div>
+                    <span className="eyebrow">CATEGORY MANAGEMENT</span>
+                    <h2>
+                    {dialog === "edit"
+                        ? "Edit category"
+                        : dialog === "reassign"
+                        ? "Reassign vertical"
+                        : dialog === "status"
+                        ? `${
+                            selected.status === "active" ? "Deactivate" : "Activate"
+                        } category`
+                        : "Delete category"}
+                    </h2>
+                </div>
+                <button
+                    type="button"
+                    className="icon-button"
+                    onClick={() => setDialog(null)}
+                    aria-label="Close"
+                >
+                    <X size={18} />
+                </button>
+                </div>
+                {dialog === "edit" && (
+                <>
+                    <label>
+                    Category name
+                    <input
+                        value={name}
+                        onChange={(event) => setName(event.target.value)}
+                        required
+                        maxLength={120}
+                    />
+                    </label>
+                    <label>
+                    Description
+                    <textarea
+                        value={description}
+                        onChange={(event) => setDescription(event.target.value)}
+                        rows={3}
+                        maxLength={1000}
+                    />
+                    </label>
+                    {name.trim() !== selected.name && (
+                    <label>
+                        Reason for name change
+                        <input
+                        value={reason}
+                        onChange={(event) => setReason(event.target.value)}
+                        required
+                        />
+                    </label>
+                    )}
+                </>
+                )}
+                {dialog === "reassign" && (
+                <>
+                    <p>
+                    Move <strong>{selected.name}</strong> to another Operational
+                    vertical. Historical transactions will not be rewritten.
+                    </p>
+                    <label>
+                    New vertical
+                    <select
+                        value={verticalId}
+                        onChange={(event) => setVerticalId(event.target.value)}
+                        required
+                    >
+                        <option value="">Choose a vertical</option>
+                        {verticals
+                        .filter((item) => item.id !== selected.vertical_id)
+                        .map((item) => (
+                            <option key={item.id} value={item.id}>
+                            {item.name}
+                            </option>
+                        ))}
+                    </select>
+                    </label>
+                    <label>
+                    Reason
+                    <input
+                        value={reason}
+                        onChange={(event) => setReason(event.target.value)}
+                        required
+                    />
+                    </label>
+                </>
+                )}
+                {dialog === "status" && (
+                <>
+                    <p>
+                    {selected.status === "active"
+                        ? "Products under this category will become unavailable for new orders. Their product status will remain unchanged."
+                        : "This category will become available for new product classification if its vertical is Operational."}
+                    </p>
+                    <label>
+                    Reason
+                    <input
+                        value={reason}
+                        onChange={(event) => setReason(event.target.value)}
+                        required
+                    />
+                    </label>
+                </>
+                )}
+                {dialog === "delete" && (
+                <>
+                    <p className="category-danger-copy">
+                    <ShieldAlert size={18} /> Delete <strong>{selected.name}</strong>?
+                    This cannot be undone. Categories with historical product
+                    references cannot be deleted.
+                    </p>
+                    <label>
+                    Reason
+                    <input
+                        value={reason}
+                        onChange={(event) => setReason(event.target.value)}
+                        required
+                    />
+                    </label>
+                </>
+                )}
+                {error && (
+                <div className="categories-alert categories-alert--error">
+                    <AlertCircle size={16} />
+                    {error}
+                </div>
+                )}
+                <div className="category-modal-actions">
+                <button
+                    type="button"
+                    className="button button--secondary"
+                    onClick={() => setDialog(null)}
+                >
+                    Cancel
+                </button>
+                <button
+                    type="submit"
+                    disabled={busy || (dialog === "reassign" && !verticalId)}
+                    className={`button ${
+                    dialog === "delete" ? "button--danger" : "button--primary"
+                    }`}
+                >
+                    {busy
+                    ? "Saving…"
+                    : dialog === "delete"
+                    ? "Delete category"
+                    : "Save changes"}
+                </button>
+                </div>
+            </form>
+            </div>
+        )}
+        {dialog === "create" && (
+            <div
+            className="category-modal-backdrop"
+            role="presentation"
+            onMouseDown={(event) => {
+                if (event.target === event.currentTarget) setDialog(null);
+            }}
+            >
+            <form className="category-modal" onSubmit={submit}>
+                <div className="category-modal-heading">
+                <div>
+                    <span className="eyebrow">PRODUCT CATALOGUE</span>
+                    <h2>Create category</h2>
+                </div>
+                <button
+                    type="button"
+                    className="icon-button"
+                    onClick={() => setDialog(null)}
+                    aria-label="Close"
+                >
+                    <X size={18} />
+                </button>
+                </div>
+                <label>
+                Business vertical
+                <select
+                    value={verticalId}
+                    onChange={(event) => setVerticalId(event.target.value)}
+                    required
+                >
+                    <option value="">Choose an Operational vertical</option>
+                    {verticals.map((item) => (
+                    <option key={item.id} value={item.id}>
+                        {item.name}
+                    </option>
+                    ))}
+                </select>
+                </label>
+                <label>
+                Category name
+                <input
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    required
+                    maxLength={120}
+                    placeholder="e.g. Broccoli"
+                />
+                </label>
+                <label>
+                Description <span className="muted">(optional)</span>
+                <textarea
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    rows={3}
+                    placeholder="A short description of this category"
+                    maxLength={1000}
+                />
+                </label>
+                {error && (
+                <div className="categories-alert categories-alert--error">
+                    <AlertCircle size={16} />
+                    {error}
+                </div>
+                )}
+                <div className="category-modal-actions">
+                <button
+                    type="button"
+                    className="button button--secondary"
+                    onClick={() => setDialog(null)}
+                >
+                    Cancel
+                </button>
+                <button
+                    type="submit"
+                    disabled={busy || !verticalId}
+                    className="button button--primary"
+                >
+                    {busy ? "Creating…" : "Create category"}
+                </button>
+                </div>
+            </form>
+            </div>
+        )}
+        </main>
+    );
 }

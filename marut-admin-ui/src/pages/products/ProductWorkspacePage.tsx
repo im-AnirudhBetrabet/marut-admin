@@ -1,20 +1,22 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, CalendarClock, CheckCircle2, CircleDollarSign, History, Leaf, LoaderCircle, LockKeyhole, Pencil, Plus, RefreshCw, ShieldCheck, X } from "lucide-react";
+import { Archive, ArrowLeft, CalendarClock, CheckCircle2, CircleDollarSign, History, Leaf, LoaderCircle, LockKeyhole, PauseCircle, Pencil, Plus, Power, RefreshCw, ShieldCheck, X } from "lucide-react";
 import { useAuth } from "../../app/useAuth";
 import { ApiError } from "../../services/api/client";
 import { getProduct } from "../../services/products/products.api";
 import type { ProductRecord } from "../../services/products/products.types";
+import { updateProductStatus, type ProductLifecycleStatus } from "../../services/products/productLifecycle.api";
 import { getGlobalMinimumFloors } from "../../services/pricing/globalMinimumFloors.api";
 import type { GlobalMinimumFloor } from "../../services/pricing/globalMinimumFloors.types";
 import { cancelProductMinimumFloor, createProductMinimumFloor, getEffectiveProductMinimumFloor, getProductMinimumFloors, updateProductMinimumFloor } from "../../services/pricing/productMinimumFloors.api";
 import type { ProductMinimumFloor } from "../../services/pricing/productMinimumFloors.types";
 import { cancelProductPrice, createProductPrice, getEffectiveProductPrice, getProductPrices, updateProductPrice } from "../../services/pricing/productPrices.api";
 import type { ProductPriceRecord } from "../../services/pricing/productPrices.types";
-import "../../styles/products.css";
-import "../../styles/product-pricing.css";
+import { ProductPackSizesPanel } from "./ProductPackSizesPanel";
+import { ProductImagesPanel } from "./ProductImagesPanel";
+import { ProductHistoryPanel } from "./ProductHistoryPanel";
 
-type Tab = "overview" | "pricing";
+type Tab = "overview" | "pack-sizes" | "images" | "pricing" | "history";
 type FloorDialog = "create" | "edit" | "cancel" | null;
 type PriceDialog = "create" | "edit" | "cancel";
 const priceStatus = (price: ProductPriceRecord) => price.period_status ?? price.status ?? "unknown";
@@ -50,6 +52,12 @@ const errorText = (error: unknown) => {
         if (code === "PRICE_IMMUTABLE") return "An effective or cancelled price cannot be edited or cancelled.";
         if (code === "PRODUCT_ARCHIVED") return "Archived products cannot receive pricing or floor changes.";
         if (code === "REASON_REQUIRED") return "Please provide a reason for this change.";
+        if (code === "PRODUCT_ACTIVATION_REQUIREMENTS_NOT_MET") return "This product does not meet all activation requirements yet (active category, operational vertical, active pack size, and effective standard price).";
+        if (code === "MISSING_STANDARD_PRICE") return "Configure an effective standard price before activating this product.";
+        if (code === "NO_ACTIVE_PACK_SIZE") return "Add or activate at least one pack size before activating this product.";
+        if (code === "CATEGORY_NOT_ACTIVE") return "Activate this product's category before activating the product.";
+        if (code === "VERTICAL_NOT_OPERATIONAL") return "This product's vertical must be Operational before the product can be activated.";
+        if (code === "INVALID_STATUS_TRANSITION") return "This status change is not allowed from the product's current status.";
         return error.message;
     }
     return error instanceof Error ? error.message : "Something went wrong. Please try again.";
@@ -63,6 +71,7 @@ export function ProductWorkspacePage() {
     const isOwner = admin?.role === "owner";
     const permissions = admin?.permissions;
     const canViewPricing = isOwner || permissions === "all" || (Array.isArray(permissions) && permissions.some((item) => item.module_key === "pricing" && (item.level === "view" || item.level === "manage")));
+    const canManageProducts = isOwner || permissions === "all" || (Array.isArray(permissions) && permissions.some((item) => item.module_key === "products" && item.level === "manage"));
     const [product, setProduct] = useState<ProductRecord | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -92,6 +101,17 @@ export function ProductWorkspacePage() {
     const [priceSaving, setPriceSaving] = useState(false);
     const [priceError, setPriceError] = useState("");
     const [priceNotice, setPriceNotice] = useState("");
+    const [lifecycleTarget, setLifecycleTarget] = useState<ProductLifecycleStatus | null>(null);
+    const [lifecycleReason, setLifecycleReason] = useState("");
+    const [lifecycleError, setLifecycleError] = useState("");
+    const [lifecycleSaving, setLifecycleSaving] = useState(false);
+    const [lifecycleNotice, setLifecycleNotice] = useState("");
+
+    const refreshProduct = useCallback(async () => {
+        if (!token || !productId) return;
+        const refreshed = await getProduct(token, productId);
+        setProduct(refreshed);
+    }, [token, productId]);
 
     useEffect(() => {
         if (!productId) { setLoading(false); setProduct(null); return; }
@@ -195,7 +215,34 @@ export function ProductWorkspacePage() {
         finally { setPriceSaving(false); }
     };
 
-    const canManagePricing = isOwner || permissions === "all" || (Array.isArray(permissions) && permissions.some((item) => item.module_key === "pricing" && item.level === "manage"));
+    const canManagePricing = product?.status !== "archived" && (isOwner || permissions === "all" || (Array.isArray(permissions) && permissions.some((item) => item.module_key === "pricing" && item.level === "manage")));
+    const openLifecycleDialog = (status: ProductLifecycleStatus) => {
+        setLifecycleTarget(status);
+        setLifecycleReason("");
+        setLifecycleError("");
+    };
+    const submitLifecycleChange = async (event: FormEvent) => {
+        event.preventDefault();
+        if (!token || !product || !lifecycleTarget || !canManageProducts || !lifecycleReason.trim()) return;
+        setLifecycleSaving(true);
+        setLifecycleError("");
+        try {
+            const updated = await updateProductStatus(token, product.id, { status: lifecycleTarget, reason: lifecycleReason.trim() });
+            setProduct(updated);
+            setLifecycleTarget(null);
+            setLifecycleNotice(`Product ${lifecycleTarget === "active" ? "activated" : lifecycleTarget === "inactive" ? "deactivated" : "archived"} successfully.`);
+        } catch (cause) {
+            setLifecycleError(errorText(cause));
+        } finally {
+            setLifecycleSaving(false);
+        }
+    };
+    const lifecycleTitle = lifecycleTarget === "active" ? "Activate product?" : lifecycleTarget === "inactive" ? "Deactivate product?" : "Archive product permanently?";
+    const lifecycleDescription = lifecycleTarget === "active"
+        ? "This product will become eligible for new orders once all catalogue and pricing requirements are satisfied."
+        : lifecycleTarget === "inactive"
+            ? "This product will no longer be available for new orders. Its details and historical transactions will be retained."
+            : "An archived product cannot be reactivated. Its SKU will remain permanently reserved and historical records will be retained.";
     const effectivePricePerGram = typeof effectivePrice === "number" ? effectivePrice : effectivePrice?.price_per_gram == null ? null : Number(effectivePrice.price_per_gram);
     const enteredPrice = Number(priceAmount);
     const previewPricePerGram = priceDialog !== "cancel" && priceAmount.trim() !== "" && Number.isFinite(enteredPrice) && enteredPrice > 0 ? enteredPrice : effectivePricePerGram;
@@ -205,13 +252,17 @@ export function ProductWorkspacePage() {
 
     return <div className="products-workspace">
         <button className="product-back-link" onClick={() => navigate("/products")}><ArrowLeft size={16} /> Products</button>
-        <div className="products-page-heading"><div><div className="product-heading-mark"><Leaf size={16} /><span>PRODUCT WORKSPACE</span></div><h1>{product.name}</h1><p>{product.category?.vertical?.name} · {product.category?.name} · <span className="product-workspace-sku">{product.sku}</span></p></div><span className={`product-status-pill status-${product.status}`}>{product.status}</span></div>
+        <div className="products-page-heading"><div><div className="product-heading-mark"><Leaf size={16} /><span>PRODUCT WORKSPACE</span></div><h1>{product.name}</h1><p>{product.category?.vertical?.name} · {product.category?.name} · <span className="product-workspace-sku">{product.sku}</span></p></div><div className="product-lifecycle-toolbar"><span className={`product-status-pill status-${product.status}`}>{product.status}</span>{canManageProducts && product.status !== "archived" && <div className="product-lifecycle-actions">{(product.status === "draft" || product.status === "inactive") && <button type="button" className="product-button product-button-primary" onClick={() => openLifecycleDialog("active")}><Power size={15} /> Activate</button>}{product.status === "active" && <button type="button" className="product-button product-button-secondary" onClick={() => openLifecycleDialog("inactive")}><PauseCircle size={15} /> Deactivate</button>}<button type="button" className="product-button product-button-danger" onClick={() => openLifecycleDialog("archived")}><Archive size={15} /> Archive</button></div>}</div></div>
+        {lifecycleNotice && <div className="product-pricing-success" role="status"><CheckCircle2 size={16} />{lifecycleNotice}</div>}
         <nav className="product-workspace-tabs" aria-label="Product workspace sections">
             <button type="button" className={tab === "overview" ? "is-active" : ""} onClick={() => setTab("overview")}>Overview</button>
+            <button type="button" className={tab === "pack-sizes" ? "is-active" : ""} onClick={() => setTab("pack-sizes")}>Pack Sizes</button>
+            <button type="button" className={tab === "images" ? "is-active" : ""} onClick={() => setTab("images")}>Images</button>
             <button type="button" className={tab === "pricing" ? "is-active" : ""} onClick={() => setTab("pricing")}><CircleDollarSign size={15} /> Pricing</button>
+            <button type="button" className={tab === "history" ? "is-active" : ""} onClick={() => setTab("history")}><History size={15} /> History</button>
         </nav>
 
-        {tab === "overview" ? <section className="product-form-card"><div className="product-section-heading"><span className="product-section-index">SKU</span><div><h2>{product.sku}</h2><p>Product identity and pack configuration.</p></div></div><div className="product-review-block"><h3>Product details</h3><dl><dt>Status</dt><dd>{product.status}</dd><dt>Description</dt><dd>{product.description || "—"}</dd><dt>Growing duration</dt><dd>{product.growing_duration_days ? `${product.growing_duration_days} days` : "—"}</dd><dt>Pack sizes</dt><dd>{sortedPackSizes.map((pack) => `${pack.weight_grams}g (${pack.status})`).join(", ") || "—"}</dd></dl></div><button className="product-button product-button-secondary" onClick={() => navigate("/products")}>Return to Products</button></section> : <section className="product-pricing-workspace">
+        {tab === "overview" ? <section className="product-form-card"><div className="product-section-heading"><span className="product-section-index">SKU</span><div><h2>{product.sku}</h2><p>Product identity and pack configuration.</p></div></div><div className="product-review-block"><h3>Product details</h3><dl><dt>Status</dt><dd>{product.status}</dd><dt>Description</dt><dd>{product.description || "—"}</dd><dt>Growing duration</dt><dd>{product.growing_duration_days ? `${product.growing_duration_days} days` : "—"}</dd><dt>Pack sizes</dt><dd>{sortedPackSizes.map((pack) => `${pack.weight_grams}g (${pack.status})`).join(", ") || "—"}</dd></dl></div><button className="product-button product-button-secondary" onClick={() => navigate("/products")}>Return to Products</button></section> : tab === "pack-sizes" ? <ProductPackSizesPanel productId={product.id} canManage={canManageProducts && product.status !== "archived"} isArchived={product.status === "archived"} onPacksChanged={refreshProduct} /> : tab === "images" ? <ProductImagesPanel productId={product.id} canManage={canManageProducts && product.status !== "archived"} isArchived={product.status === "archived"} /> : tab === "history" ? <ProductHistoryPanel productId={product.id} /> : <section className="product-pricing-workspace">
             {!canViewPricing ? <div className="product-pricing-notice"><LockKeyhole size={19} /><div><strong>Pricing access required</strong><p>You need pricing view permission to inspect product prices and minimum floors.</p></div></div> : <>
                 <section className="product-standard-pricing">
                     <div className="product-standard-pricing-heading"><div><div className="product-heading-mark"><CircleDollarSign size={15} /><span>STANDARD PRICING</span></div><h2>Price per gram</h2><p>Set the standard selling price. Pack prices are calculated from each configured pack weight.</p></div>{canManagePricing && <button type="button" className="product-button product-button-primary" onClick={() => openPriceForm("create")}><Plus size={16} /> New price</button>}</div>
@@ -252,6 +303,8 @@ export function ProductWorkspacePage() {
                 </div>
             </>}
         </section>}
+
+        {lifecycleTarget && <div className="product-pricing-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !lifecycleSaving) setLifecycleTarget(null); }}><form className="product-pricing-modal product-lifecycle-modal" onSubmit={submitLifecycleChange} role="dialog" aria-modal="true" aria-labelledby="product-lifecycle-title"><div className="product-pricing-modal-heading"><div><span className="product-heading-mark">PRODUCT LIFECYCLE</span><h2 id="product-lifecycle-title">{lifecycleTitle}</h2></div><button type="button" onClick={() => setLifecycleTarget(null)} disabled={lifecycleSaving} aria-label="Close"><X size={18} /></button></div><p className="product-pricing-modal-copy">{lifecycleDescription}</p><label className="product-pricing-field"><span>Reason <b>*</b></span><textarea required rows={3} maxLength={500} value={lifecycleReason} onChange={(event) => setLifecycleReason(event.target.value)} placeholder={lifecycleTarget === "active" ? "e.g. Product approved for sale" : lifecycleTarget === "inactive" ? "e.g. Temporarily unavailable" : "e.g. Product permanently discontinued"} /></label>{lifecycleError && <div className="product-pricing-alert" role="alert">{lifecycleError}</div>}<div className="product-pricing-modal-actions"><button type="button" className="product-button product-button-secondary" onClick={() => setLifecycleTarget(null)} disabled={lifecycleSaving}>Cancel</button><button type="submit" className={`product-button ${lifecycleTarget === "archived" ? "product-button-danger" : "product-button-primary"}`} disabled={lifecycleSaving || !lifecycleReason.trim()}>{lifecycleSaving ? "Updating…" : lifecycleTarget === "active" ? "Activate Product" : lifecycleTarget === "inactive" ? "Deactivate Product" : "Archive Product"}</button></div></form></div>}
 
         {dialog && <div className="product-pricing-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setDialog(null); }}><form className="product-pricing-modal" onSubmit={submitFloor} role="dialog" aria-modal="true" aria-labelledby="product-floor-dialog-title"><div className="product-pricing-modal-heading"><div><span className="product-heading-mark">PRODUCT MINIMUM FLOOR</span><h2 id="product-floor-dialog-title">{dialog === "create" ? "Set a product floor" : dialog === "edit" ? "Edit scheduled floor" : "Cancel scheduled floor"}</h2></div><button type="button" onClick={() => setDialog(null)} disabled={saving} aria-label="Close"><X size={18} /></button></div>
             {dialog === "cancel" ? <p className="product-pricing-modal-copy">This scheduled floor will remain in history as cancelled and cannot be reactivated.</p> : <><label className="product-pricing-field"><span>Minimum price per gram (₹)</span><input type="number" min="0.0001" step="0.0001" required value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.7500" /><small>Must be greater than ₹0.0000/g. The global floor may still take precedence.</small></label><label className="product-pricing-field"><span>Effective from <em>IST</em></span><input type="datetime-local" value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} required={dialog === "edit"} /><small>{dialog === "edit" ? "Required for scheduled floor updates." : "Leave blank to use the backend's default effective-date behavior."}</small></label><label className="product-pricing-field"><span>Effective until <em>IST · optional</em></span><input type="datetime-local" value={effectiveUntil} onChange={(event) => setEffectiveUntil(event.target.value)} /><small>Leave blank for an open-ended product floor.</small></label></>}
