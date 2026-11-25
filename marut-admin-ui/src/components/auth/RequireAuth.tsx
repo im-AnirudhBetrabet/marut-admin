@@ -20,8 +20,10 @@ export function RequireAuth() {
         <div>
           <strong>We couldn't verify your admin access.</strong>
           <p>{profileError}</p>
-          <button type="button" onClick={() => void refreshAdmin()}>Try again</button>
-          <button type="button" onClick={() => window.location.assign("/login")}>Back to sign in</button>
+          <div style={{display: "flex", flexDirection: "column", gap: "1rem"}}>
+            <button type="button" className="product-button product-button-secondary" onClick={() => void refreshAdmin()}>Try again</button>
+            <button type="button" className="product-button product-button-primary" onClick={() => window.location.assign("/login")}>Back to sign in</button>
+          </div>
         </div>
       </div>
     );
